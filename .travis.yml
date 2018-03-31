@@ -1,0 +1,14 @@
+language: node_js
+node_js: '8'
+install:
+  - npm install
+  - node-gyp install
+addons:
+  apt:
+    sources:
+      - llvm-toolchain-trusty-4.0
+    packages:
+      - clang-4.0
+      - clang-tidy-4.0
+dist: trusty
+sudo: required

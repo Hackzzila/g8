@@ -1,0 +1,25 @@
+{
+  "name": "g8",
+  "version": "0.1.0",
+  "description": "Write Node addons in Go",
+  "bin": "cli.js",
+  "gypfile": false,
+  "scripts": {
+    "test": "npm run cpplint && npm run clang-tidy && npm run eslint",
+    "cpplint": "./cpplint.py g8.h g8.cc",
+    "clang-tidy": "clang-tidy g8.h g8.cc -extra-arg-before=-xc++ -checks=-*,google-* -warnings-as-errors=* -- -std=c++11 -Inode_modules/nan -I$HOME/.node-gyp/$(node -p 'process.version.substring(1)')/include/node",
+    "eslint": "eslint cli.js"
+  },
+  "author": "Hackzzila <admin@hackzzila.com>",
+  "license": "MIT",
+  "dependencies": {
+    "nan": "^2.9.2",
+    "node-gyp": "^3.6.2",
+    "yargs": "^11.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.9.0"
+  }
+}
