@@ -1,4 +1,5 @@
-# g8
+# g8 [![Build Status](https://travis-ci.org/Hackzzila/g8.svg?branch=master)](https://travis-ci.org/Hackzzila/g8)
+
 Write Node.js addons in Go.
 
 For the API refrence, look at `g8.h`.
