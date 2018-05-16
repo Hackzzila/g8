@@ -10,81 +10,36 @@ require('yargs') // eslint-disable-line no-unused-expressions
     fs.copyFileSync(path.resolve(__dirname, 'main.go'), path.resolve('main.go'));
     fs.copyFileSync(path.resolve(__dirname, 'main.js'), path.resolve('main.js'));
     fs.copyFileSync(path.resolve(__dirname, 'binding.gyp'), path.resolve('binding.gyp'));
-    if (!fs.existsSync(path.resolve('.g8'))) fs.mkdirSync(path.resolve('.g8'));
-    fs.copyFileSync(path.resolve(__dirname, 'g8.h'), path.resolve('.g8', 'g8.h'));
-    fs.copyFileSync(path.resolve(__dirname, 'g8.cc'), path.resolve('.g8', 'g8.cc'));
   })
   .command('gen', 'Generates build files', {}, () => {
-    const regex = /extern ([^"*]+)\* ([^(]+)\(FunctionCallbackInfo p0\);/g;
+    const regex = /extern napi_value ([^(]+)\(napi_env p0, napi_callback_info p1\);/g;
 
     const header = fs.readFileSync('.g8/out.h', 'utf8');
 
-    let out = `#include <nan.h>
+    let out = `#include <node_api.h>
 #include "out.h"
-#include "g8.h"
 
-template <typename F, typename T>
-T *To(F *x) {
-  T *ptr = (T *)malloc(sizeof(T));
-  *ptr = T::Cast(*x);
-  return ptr;
-}
-
-namespace g8 {
-  FunctionCallbackInfo createCallbackInfo(const Nan::FunctionCallbackInfo<v8::Value>& info) {
-    FunctionCallbackInfo callbackInfo;
-    callbackInfo.length = info.Length();
-    callbackInfo.args = (Value **)malloc(info.Length() * sizeof(Value *));
-
-    for (int i = 0; i < info.Length(); i++) {
-      callbackInfo.args[i] = (Value *)malloc(sizeof(Value));
-      *callbackInfo.args[i] = info[i];
-    }
-
-    return callbackInfo;
-  }
-
-  void freeCallbackInfo(FunctionCallbackInfo info) {
-    for (int i = 0; i < info.length; i++) {
-      free(info.args[i]);
-    }
-
-    free(info.args);
-  }
-
-  namespace user {`;
+napi_value init(napi_env env, napi_value exports) {
+  napi_status status;`;
 
     for (const def of header.match(regex)) {
-      const type = def.match(/extern ([^"*]+)\* ([^(]+)\(FunctionCallbackInfo p0\);/)[1];
-      const name = def.match(/extern ([^"*]+)\* ([^(]+)\(FunctionCallbackInfo p0\);/)[2];
-
+      const name = def.match(/extern napi_value ([^(]+)\(napi_env p0, napi_callback_info p1\);/)[1];
       out += `
-    void ${name}(const Nan::FunctionCallbackInfo<v8::Value>& info) {
-      FunctionCallbackInfo callbackInfo = createCallbackInfo(info);
-      Value *val = To<${type}, Value>(${name}(callbackInfo));
+  napi_value ${name}fn;
 
-      info.GetReturnValue().Set(*val);
+  status = napi_create_function(env, nullptr, 0, ${name}, nullptr, &${name}fn);
+  if (status != napi_ok) return nullptr;
 
-      freeCallbackInfo(callbackInfo);
-    }
+  status = napi_set_named_property(env, exports, "${name}", ${name}fn);
+  if (status != napi_ok) return nullptr;
 `;
     }
 
-    out += `  }
-}
-
-void Init(v8::Local<v8::Object> exports) {`;
-
-    for (const def of header.match(regex)) {
-      const name = def.match(/extern ([^"*]+)\* ([^(]+)\(FunctionCallbackInfo p0\);/)[2];
-
-      out += `\n  exports->Set(Nan::New("${name}").ToLocalChecked(), Nan::New<v8::FunctionTemplate>(g8::user::${name})->GetFunction());`;
-    }
-
     out += `
+  return exports;
 }
 
-NODE_MODULE(g8, Init)
+NAPI_MODULE(g8, init)
 `;
 
     fs.writeFileSync('.g8/out.cc', out);

@@ -5,15 +5,12 @@
   "bin": "cli.js",
   "gypfile": false,
   "scripts": {
-    "test": "npm run cpplint && npm run clang-tidy && npm run eslint",
-    "cpplint": "./cpplint.py g8.h g8.cc",
-    "clang-tidy": "clang-tidy g8.h g8.cc -extra-arg-before=-xc++ -checks=-*,google-* -warnings-as-errors=* -- -std=c++11 -Inode_modules/nan -I$HOME/.node-gyp/$(node -p 'process.version.substring(1)')/include/node",
+    "test": "npm run eslint",
     "eslint": "eslint cli.js"
   },
   "author": "Hackzzila <admin@hackzzila.com>",
   "license": "MIT",
   "dependencies": {
-    "nan": "^2.9.2",
     "node-gyp": "^3.6.2",
     "yargs": "^11.0.0"
   },
